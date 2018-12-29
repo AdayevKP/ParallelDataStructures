@@ -9,7 +9,7 @@
 #include "fineGrainedSync.h"
 #include "lazySync.h"
 
-#define WRITERS_NUMB 100
+#define WRITERS_NUMB 1200
 #define READERS_NUMB 1500
 
 using namespace std;
@@ -200,7 +200,7 @@ bool runTest(mySet<int> * set, int readersNum, int writersNum)
 		dataToRemove.resize(0);
 	}
 
-	for (int i = 0; i < readersNum; i++)
+	for (int i = 0; i < curpos; i++)
 	{
 		pthread_join(readers[i], NULL);
 	}
