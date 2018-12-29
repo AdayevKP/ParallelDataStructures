@@ -88,7 +88,15 @@ public:
 			pthread_mutex_lock(&prev->mutex);
 
 			if (!prev->deleted && !curr->deleted && prev->next == curr)
+			{
 				break;
+			}
+			else if(prev->next == curr && curr->deleted)
+			{
+				prev->next = curr->next;
+				delete curr;
+				removed = true;
+			}
 			else
 			{
 				pthread_mutex_unlock(&curr->mutex);
@@ -96,11 +104,10 @@ public:
 			}
 		}
 
-		if (curr->data == item) 
+		if (curr->data == item && !removed) 
 		{
 			curr->deleted = true;
 			prev->next = curr->next;
-			delete curr;
 
 			removed = true;
 		}
