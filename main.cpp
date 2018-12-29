@@ -64,7 +64,7 @@ void *ReadElem(void * args)
 
 bool runTest(mySet<int> * set, int readersNum, int writersNum)
 {
-	bool writersTest = true, readersTest = true;
+	bool writersTest = true;
 	vector <pthread_t> writers(writersNum);
 	vector <pthread_t> readers(readersNum);
 	vector<int> addedData;
