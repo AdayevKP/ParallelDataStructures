@@ -83,6 +83,7 @@ public:
 				curr = curr->next;
 			}
 
+
 			pthread_mutex_lock(&curr->mutex);
 			pthread_mutex_lock(&prev->mutex);
 

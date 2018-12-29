@@ -9,10 +9,13 @@
 #include "fineGrainedSync.h"
 #include "lazySync.h"
 
-#define WRITERS_NUMB 5
-#define READERS_NUMB 5
+#define WRITERS_NUMB 100
+#define READERS_NUMB 1500
 
 using namespace std;
+
+int size = 1000;
+vector<int> testIntArray(2*size, 0);
 
 struct Args {
 	int dataSize;
@@ -45,6 +48,20 @@ void *DeleteElem(void * args)
 }
 
 
+void *ReadElem(void * args)
+{
+	Args* arguments = (Args*)args;
+	for (int i = 0; i < arguments->dataSize; i++)
+	{
+		if(arguments->set->Contains(arguments->data[i]))
+            testIntArray.at(arguments->data[i])++;
+
+	}
+	pthread_exit(NULL);
+	return NULL;
+}
+
+
 bool runTest(mySet<int> * set, int readersNum, int writersNum)
 {
 	bool writersTest = true, readersTest = true;
@@ -67,7 +84,7 @@ bool runTest(mySet<int> * set, int readersNum, int writersNum)
 		Args *argsStruct;
 		argsStruct = new Args;
 
-		argsStruct->dataSize = 3;
+		argsStruct->dataSize = dataToAdd.size();
 		argsStruct->data = dataToAdd;
 		argsStruct->set = set;
 
@@ -99,7 +116,10 @@ bool runTest(mySet<int> * set, int readersNum, int writersNum)
 	for (int i = 0; i < readersNum; i++)
 	{
 		vector<int> dataToRemove;
-		for (int j = 0; j < ceil(addedData.size() / readersNum); j++)
+		int dataSizeToRemove = (int)ceil((float)addedData.size() / (float)readersNum);
+		if (addedData.size() <= (unsigned int)curpos)
+			break;
+		for (int j = 0; j < dataSizeToRemove; j++)
 		{
 			dataToRemove.push_back(addedData[curpos]);
 			curpos ++;
@@ -107,7 +127,7 @@ bool runTest(mySet<int> * set, int readersNum, int writersNum)
 		Args *argsStruct;
 		argsStruct = new Args;
 
-		argsStruct->dataSize = 3;
+		argsStruct->dataSize = dataToRemove.size();
 		argsStruct->data = dataToRemove;
 		argsStruct->set = set;
 
@@ -133,19 +153,83 @@ bool runTest(mySet<int> * set, int readersNum, int writersNum)
 	else
 		cout << "readers test: failed\n";
 
+	cout << "starting readers writers test\n";
+
+
+    bool readersWritersTest = true;
+
+	for (int i = 0; i < size; i ++)
+		set->Add(2*i);
+
+    for (int i = 0; i < writersNum; i++)
+	{
+		vector<int> dataToAdd;
+		addedData.push_back(2 * i + 1);
+
+		Args *argsStruct;
+		argsStruct = new Args;
+
+		argsStruct->dataSize = dataToAdd.size();
+		argsStruct->data = dataToAdd;
+		argsStruct->set = set;
+
+		pthread_create(&writers[i], NULL, AddElem, (void *)argsStruct);
+		dataToAdd.resize(0);
+	}
+
+	curpos = 0;
+	for (int i = 0; i < readersNum; i++)
+	{
+		vector<int> dataToRemove;
+		int dataSizeToRemove = (int)ceil((float)size / (float)readersNum);
+		if (size <= curpos)
+			break;
+		for (int j = 0; j < dataSizeToRemove; j++)
+		{
+			dataToRemove.push_back(2*curpos);
+			curpos ++;
+		}
+		Args *argsStruct;
+		argsStruct = new Args;
+
+		argsStruct->dataSize = dataToRemove.size();
+		argsStruct->data = dataToRemove;
+		argsStruct->set = set;
+
+		pthread_create(&readers[i], NULL, ReadElem, (void *)argsStruct);
+		dataToRemove.resize(0);
+	}
+
+	for (int i = 0; i < readersNum; i++)
+	{
+		pthread_join(readers[i], NULL);
+	}
+
+	for (int i = 0; i < writersNum; i++)
+	{
+		pthread_join(writers[i], NULL);
+	}
+
+	for (int i = 0; i < size; i ++)
+	{
+        	if(testIntArray[2*i] != 1)
+        	{
+            		readersWritersTest = false;
+        	}
+	}
+
+	if (readersWritersTest)
+		cout << "readers writers test: ok\n";
+	else
+		cout << "readers writers test: failed\n";
+
+
 	return true;
 }
 
 int main (int argc, char * argv [])
 {
 	mySet<int> *set;
-	set = new FGSet<int>(INT_MIN, INT_MAX);
-
-	cout << "TEST FOR FINE GRAINDES SET\n";
-	runTest(set, READERS_NUMB, WRITERS_NUMB);
-	cout << "TEST END\n\n";
-
-	delete set;
 
 	set = new LSSet<int>(INT_MIN, INT_MAX);
 
@@ -153,7 +237,21 @@ int main (int argc, char * argv [])
 	runTest(set, READERS_NUMB, WRITERS_NUMB);
 	cout << "TEST END\n\n";
 
+	testIntArray.resize(0);
+	testIntArray.resize(2*size);
+
+
 	delete set;
+
+    set = new FGSet<int>(INT_MIN, INT_MAX);
+
+	cout << "TEST FOR FINE GRAINDES SET\n";
+	runTest(set, READERS_NUMB, WRITERS_NUMB);
+	cout << "TEST END\n\n";
+
+	delete set;
+
+
 
 	return 0;
 }

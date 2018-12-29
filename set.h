@@ -7,7 +7,7 @@ template <typename Elem>
 class mySet {
 public:
    mySet ()  {}
-   ~mySet()  {}
+   virtual ~mySet()  {}
 
    virtual bool  Add       (const Elem & item) = 0;
    virtual bool  Remove    (const Elem & item) = 0;
