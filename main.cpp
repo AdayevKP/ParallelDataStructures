@@ -192,51 +192,6 @@ bool runTest(mySet<int> * set, int readersNum, int writersNum)
 
 	cout << "starting readers test\n";
 
-	int threadscreated = 0;
-	curpos = 0;
-	for (int i = 0; i < readersNum; i++)
-	{
-		vector<int> dataToRemove;
-		int dataSizeToRemove = (int)ceil((double)addedData.size() / (double)readersNum);
-		if (addedData.size() <= (unsigned int)curpos)
-			break;
-		for (int j = 0; j < dataSizeToRemove; j++)
-		{
-			dataToRemove.push_back(addedData[curpos]);
-			curpos ++;
-		}
-		Args *argsStruct;
-		argsStruct = new Args;
-
-		argsStruct->dataSize = dataToRemove.size();
-		argsStruct->data = dataToRemove;
-		argsStruct->set = set;
-
-		threadscreated += 1-pthread_create(&readers[i], NULL, DeleteElem, (void *)argsStruct);
-		dataToRemove.resize(0);
-	}
-
-	cout << threadscreated << "<-threads\n";
-
-	for (int i = 0; i < readersNum; i++)
-	{
-		pthread_join(readers[i], NULL);
-	}
-
-	for (unsigned int i = 0; i < addedData.size(); i++)
-	{
-		if (set->Contains(addedData[i])) {
-			readersTest = false;
-			break;
-		}
-	}
-
-	if (readersTest)
-		cout << "readers test: ok\n";
-	else
-		cout << "readers test: failed\n";
-
-
 
 	return true;
 }
